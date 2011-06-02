@@ -17,25 +17,45 @@ namespace PPTVideo
 	{
 		static PowerPoint.Application objApp;
 		
-		static void Main(string[] args)
+		static int Main(string[] args)
 		{
-			PowerPoint._Presentation objPres;
-			objApp = new PowerPoint.Application();
-			//objApp.Visible = Microsoft.Office.Core.MsoTriState.msoTrue;
-			objPres = objApp.Presentations.Open(Directory.GetCurrentDirectory() + "\\" + args[0], MsoTriState.msoTrue, MsoTriState.msoTrue, MsoTriState.msoTrue);
-			objPres.SaveAs(Directory.GetCurrentDirectory() + "\\" + args[1], PowerPoint.PpSaveAsFileType.ppSaveAsWMV, MsoTriState.msoTriStateMixed);
-			long len = 0;
-			do{
-				System.Threading.Thread.Sleep(500);
-				try {
-					FileInfo f = new FileInfo(args[1]);
-					len = f.Length;
-				} catch {
-					continue;
-				}
-			} while (len == 0);
-			objApp.Quit();
-			File.Delete(args[0]);
+			string usage = "Usage: PPTVideo.exe <infile> <outfile> [-d]";
+			
+			try{
+				if (args.Length < 2)
+					throw new ArgumentException("Wrong number of arguments.\n" + usage);
+			
+				PowerPoint._Presentation objPres;
+				objApp = new PowerPoint.Application();
+				//objApp.Visible = Microsoft.Office.Core.MsoTriState.msoTrue;
+				
+				objPres = objApp.Presentations.Open(Path.GetFullPath(args[0]), MsoTriState.msoTrue, MsoTriState.msoTrue, MsoTriState.msoTrue);
+				objPres.SaveAs(Path.GetFullPath(args[1]), PowerPoint.PpSaveAsFileType.ppSaveAsWMV, MsoTriState.msoTriStateMixed);
+				long len = 0;
+				do{
+					System.Threading.Thread.Sleep(500);
+					try {
+						FileInfo f = new FileInfo(args[1]);
+						len = f.Length;
+					} catch {
+						continue;
+					}
+				} while (len == 0);
+				objApp.Quit();
+				
+				//
+				// Check if we want to delete the input file
+				//
+				if (args.Length > 2 && args[2] == "-d")
+					File.Delete(args[0]);
+			}
+			catch (Exception e)
+			{
+				System.Console.WriteLine("Error: " + e.Message);
+				return 1;
+			}
+			
+			return 0;
 		}
 	}
 }
